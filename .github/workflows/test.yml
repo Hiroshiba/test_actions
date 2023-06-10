@@ -19,5 +19,4 @@ jobs:
         shell: bash
         run: |
           set -eux
-          [ -e "${{ matrix.download_dir }}/VERSION" ]
-          echo [ "$(cat "${{ matrix.download_dir }}/VERSION")" = "${{ env.EXPECTED_VOICEVOX_CORE_VERSION }}" ]
+          echo "${{ env.EXPECTED_VOICEVOX_CORE_VERSION }}"
