@@ -13,7 +13,7 @@ jobs:
         if: ${{ env.EXPECTED_VOICEVOX_CORE_VERSION == 'latest' }}
         shell: bash
         run: |
-          echo "EXPECTED_VOICEVOX_CORE_VERSION=$(gh release view --repo VOICEVOX/voicevox_core --json version | jq -r '.version')" >> "$GITHUB_ENV"
+          echo "EXPECTED_VOICEVOX_CORE_VERSION=$(gh release view --repo VOICEVOX/voicevox_core --json 'tagName' --jq '.tagName')" >> "$GITHUB_ENV"
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Check downloaded version
