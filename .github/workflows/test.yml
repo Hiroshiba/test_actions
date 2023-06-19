@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: "!!env.KUURAN ${{ !!env.KUURAN }}"
+      - name: "env.KUURAN ${{ !env.KUURAN }} ${{ !!env.KUURAN }}"
         run: echo ${{ !!env.KUURAN }}
-      - name: "!!env.TRUEE ${{ !!env.TRUEE }}"
+      - name: "env.TRUEE ${{ !env.TRUEE }} ${{ !!env.TRUEE }}"
         run: echo ${{ !!env.TRUEE }}
-      - name: "!!env.FALSEE ${{ !!env.FALSEE }}"
+      - name: "env.FALSEE ${{ !env.FALSEE }} ${{ !!env.FALSEE }}"
         run: echo ${{ !!env.FALSEE }}
