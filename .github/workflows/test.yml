@@ -22,8 +22,15 @@ jobs:
         run: |
           brew install coreutils
           echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
+
       - name: Setup Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
           python-version: "3.11.3"
           architecture: "x64"
+
+      - name: pip install
+        run: pip install -r requirements.txt
+
+      - run: python -c "import pyopenjtalk"
+      - run: which split
