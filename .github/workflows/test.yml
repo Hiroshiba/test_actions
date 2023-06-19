@@ -11,9 +11,6 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [windows-2019, macos-11, ubuntu-20.04]
-        architecture: [x64]
-
         # gnu commands
         sed: [sed]
         split: [split]
@@ -72,7 +69,7 @@ jobs:
 
     steps:
       - name: Install GNU coreutils
-        shell: bash
+        if: startsWith(matrix.os, 'macos-')
         run: |
           brew install gnu-sed coreutils
 
