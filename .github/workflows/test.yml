@@ -19,11 +19,10 @@ jobs:
       # macだった場合にgnusedをインストールする
       - name: Install gnused
         if: matrix.os == 'macos-latest'
-        run: brew install gnused
-
-      # gnusedをデフォルトのsedにする
-      - name: Set gnused as default sed
-        if: matrix.os == 'macos-latest'
-        run: echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $GITHUB_ENV
+        run: |
+          brew install gnu-sed
+          # echo "/usr/local/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
+          # bashrcに追記
+          echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
 
       - run: which sed
