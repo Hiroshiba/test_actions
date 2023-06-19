@@ -15,10 +15,9 @@ jobs:
         hoge: [1, 2, 3]
         # macosのときはgsed、それ以外はsedを使う
         include:
-          [
-            { os: macos-latest, sed: gsed },
-            { os: [windows-latest, ubuntu-latest], sed: sed },
-          ]
+          - sed: sed
+          - os: macos-latest
+            sed: gsed
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
