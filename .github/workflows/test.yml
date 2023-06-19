@@ -6,7 +6,12 @@ on:
 defaults:
   run:
     shell: bash
-    
+
+env:
+  KUURAN: ""
+  TRUEE: "true"
+  FALSEE: "false"
+
 jobs:
   test:
     strategy:
@@ -14,10 +19,9 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Python
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11.3"
-          architecture: "x64"
-          cache: pip
+      - name: ${{ !!env.KUURAN }}
+        run: ${{ !!env.KUURAN }}
+      - name: ${{ !!env.TRUEE }}
+        run: ${{ !!env.TRUEE }}
+      - name: ${{ !!env.FALSEE }}
+        run: ${{ !!env.FALSEE }}
