@@ -59,11 +59,11 @@ jobs:
             cudnn_url: https://developer.download.nvidia.com/compute/redist/cudnn/v8.4.1/local_installers/11.6/cudnn-linux-x86_64-8.4.1.50_cuda11.6-archive.tar.xz
             target: linux-nvidia
 
-          # gnu commands
-          - os: macos-11
-            sed: gsed
-          - os: macos-11
-            split: gsplit
+          # # gnu commands
+          # - os: macos-11
+          #   sed: gsed
+          # - os: macos-11
+          #   split: gsplit
 
     runs-on: ${{ matrix.os }}
 
