@@ -25,8 +25,8 @@ jobs:
           # bashrcに追記
           echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
 
-      - run: which sed
-        shell: bash -l {0}
+      - run: which sed with login
+        shell: bash --noprofile --norc -leo pipefail {0}
 
-      - run: which sed
+      - run: which sed without login
         shell: bash
