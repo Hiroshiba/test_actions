@@ -5,7 +5,7 @@ on:
 
 defaults:
   run:
-    shell: bash -leo pipefail {0}
+    shell: bash
 
 jobs:
   test:
@@ -69,3 +69,6 @@ jobs:
 
       - run: which ${{ env.sed }}
       - run: which ${{ env.split }}
+
+      - run: which $sed
+      - run: which $split
