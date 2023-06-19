@@ -11,9 +11,9 @@ jobs:
   test:
     strategy:
       matrix:
-        # gnu commands
-        sed: [sed]
-        split: [split]
+        # # gnu commands
+        # sed: [sed]
+        # split: [split]
 
         include:
           # Windows CPU
