@@ -12,6 +12,13 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
+        hoge: [1, 2, 3]
+        # macosのときはgsed、それ以外はsedを使う
+        include:
+          [
+            { os: macos-latest, sed: gsed },
+            { os: [windows-latest, ubuntu-latest], sed: sed },
+          ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -21,6 +28,5 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew install gnu-sed
-          echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
 
-      - run: which sed
+      - run: which ${{ matrix.sed }}
