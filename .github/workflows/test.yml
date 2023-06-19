@@ -11,27 +11,70 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [macos-11]
-        hoge: [1, 2, 3]
+        os: [windows-2019, macos-11, ubuntu-20.04]
+        architecture: [x64]
+
+        # gnu commands
+        sed: [sed]
+        split: [split]
+
+        include:
+          # Windows CPU
+          - os: windows-2019
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-windows-x64-cpu
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-win-x64-1.13.1.zip
+            target: windows-cpu
+          # Windows DirectML
+          - os: windows-2019
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-windows-x64-directml
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/Microsoft.ML.OnnxRuntime.DirectML.1.13.1.zip
+            directml_url: https://www.nuget.org/api/v2/package/Microsoft.AI.DirectML/1.10.0
+            target: windows-directml
+          # Windows NVIDIA GPU
+          - os: windows-2019
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-windows-x64-cuda
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-win-x64-gpu-1.13.1.zip
+            cuda_version: "11.6.2"
+            cudnn_url: https://developer.download.nvidia.com/compute/redist/cudnn/v8.4.1/local_installers/11.6/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive.zip
+            zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
+            target: windows-nvidia
+          # Mac CPU (x64 arch only)
+          - os: macos-11
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-osx-x64-cpu
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-osx-x86_64-1.13.1.tgz
+            target: macos-x64
+          # Linux CPU
+          - os: ubuntu-20.04
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-linux-x64-cpu
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-linux-x64-1.13.1.tgz
+            target: linux-cpu
+          # Linux NVIDIA GPU
+          - os: ubuntu-20.04
+            architecture: "x64"
+            voicevox_core_asset_prefix: voicevox_core-linux-x64-gpu
+            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-linux-x64-gpu-1.13.1.tgz
+            cuda_version: "11.6.2"
+            cudnn_url: https://developer.download.nvidia.com/compute/redist/cudnn/v8.4.1/local_installers/11.6/cudnn-linux-x86_64-8.4.1.50_cuda11.6-archive.tar.xz
+            target: linux-nvidia
+
+          # gnu commands
+          - os: macos-11
+            sed: gsed
+          - os: macos-11
+            split: gsplit
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Install GNU coreutils
         shell: bash
         run: |
           brew install gnu-sed coreutils
-          echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
-          echo 'export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"' >> $HOME/.bashrc
 
-      - name: Setup Python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
-        with:
-          python-version: "3.11.3"
-          architecture: "x64"
-
-      - run: which split
-      - run: pip install -r requirements.txt
-      - run: python -c "import pyopenjtalk"
+      - run: which ${{ matrix.sed }}
+      - run: which ${{ matrix.split }}
