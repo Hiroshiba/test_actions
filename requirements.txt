@@ -1,1 +1,2 @@
-echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> $HOME/.bashrc
+# dummy
+pyopenjtalk @ git+https://github.com/VOICEVOX/pyopenjtalk@827a3fc5c7dda7bbe832c0c69da98e39cc8cb2c3 ; python_version >= "3.11" and python_version < "3.12"
