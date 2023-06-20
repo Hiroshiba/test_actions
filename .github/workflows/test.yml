@@ -9,6 +9,10 @@ defaults:
 
 jobs:
   test:
+    env:
+      sed: ${{ matrix.os == 'macos-11' && 'gsed' || 'sed' }}
+      split: ${{ matrix.os == 'macos-11' && 'gsplit' || 'split' }}
+
     strategy:
       matrix:
         include:
@@ -56,10 +60,6 @@ jobs:
             target: linux-nvidia
 
     runs-on: ${{ matrix.os }}
-
-    env:
-      sed: ${{ matrix.os == 'macos-11' && 'gsed' || 'sed' }}
-      split: ${{ matrix.os == 'macos-11' && 'gsplit' || 'split' }}
 
     steps:
       - name: Install GNU coreutils
