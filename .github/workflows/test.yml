@@ -132,7 +132,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ubuntu-latest
+        os: [ubuntu-latest]
         hoge: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
 
     runs-on: ${{ matrix.os }}
