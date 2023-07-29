@@ -143,9 +143,12 @@ jobs:
           EOF
 
           # can_skip_in_textがtrueのものを除外する
-          list=$(cat matrix.json | jq -c '[.[] | select(.can_skip_in_text == false) | del(.can_skip_in_text)]')
+          includes=$(
+            cat matrix.json |
+            jq -c '[.[] | select(.can_skip_in_text == false) | del(.can_skip_in_text)]'
+          )
 
-          echo "includes=${list}" >> $GITHUB_OUTPUT
+          echo "includes=${includes}" >> $GITHUB_OUTPUT
 
   test:
     needs: strategy-matrix
