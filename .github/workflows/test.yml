@@ -16,7 +16,6 @@ jobs:
       - name: declare variables
         id: vars
         run: |
-          set -eux
           cat <<'EOF' > matrix.json
           [
             {
@@ -133,10 +132,37 @@ jobs:
   test:
     strategy:
       matrix:
-        include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
+        os: ubuntu-latest
+        hoge: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: ${{ matrix.os }}-${{ matrix.features }}
         run: ""
+# name: dynamic matrix
+
+# on: [push]
+
+# jobs:
+#   set-matrix:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       something: ${{ steps.set-matrix.outputs.value }}
+#     steps:
+#       - name: make values
+#         id: set-matrix
+#         run: |
+#           echo '["hoge","fuga"]' | jq -c
+#           list=$(echo '["hoge","fuga"]' | jq -c)
+#           echo "value=${list}" >> $GITHUB_OUTPUT
+
+#   execute:
+#     needs: set-matrix
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include: ${{fromJson(needs.set-matrix.outputs.something)}}
+#     steps:
+#       - run: echo ${{ matrix.hoge }}
