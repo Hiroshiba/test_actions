@@ -1,168 +1,143 @@
-# name: test
+name: test
 
-# on:
-#   push:
+on:
+  push:
 
-# defaults:
-#   run:
-#     shell: bash
-
-# jobs:
-#   strategy-matrix: # 実行対象の条件をフィルタリングする
-#     runs-on: ubuntu-latest
-#     outputs:
-#       includes: ${{ steps.vars.outputs.includes }}
-#     steps:
-#       - name: declare variables
-#         id: vars
-#         run: |
-#           cat <<'EOF' > matrix.json
-#           [
-#             {
-#               "os": "windows-2019",
-#               "features": "",
-#               "target": "x86_64-pc-windows-msvc",
-#               "artifact_name": "windows-x64-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "windows-2019",
-#               "features": "directml",
-#               "target": "x86_64-pc-windows-msvc",
-#               "artifact_name": "windows-x64-directml",
-#               "whl_local_version": "directml",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "windows-2019",
-#               "features": "",
-#               "target": "x86_64-pc-windows-msvc",
-#               "artifact_name": "windows-x64-cuda",
-#               "whl_local_version": "cuda",
-#               "use_cuda": "true"
-#             },
-#             {
-#               "os": "windows-2019",
-#               "features": "",
-#               "target": "i686-pc-windows-msvc",
-#               "artifact_name": "windows-x86-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "ubuntu-20.04",
-#               "features": "",
-#               "target": "x86_64-unknown-linux-gnu",
-#               "artifact_name": "linux-x64-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "ubuntu-20.04",
-#               "features": "",
-#               "target": "x86_64-unknown-linux-gnu",
-#               "artifact_name": "linux-x64-gpu",
-#               "whl_local_version": "cuda",
-#               "use_cuda": "true"
-#             },
-#             {
-#               "os": "ubuntu-20.04",
-#               "features": "",
-#               "target": "aarch64-unknown-linux-gnu",
-#               "artifact_name": "linux-arm64-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "ubuntu-20.04",
-#               "features": "",
-#               "target": "aarch64-linux-android",
-#               "artifact_name": "android-arm64-cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "ubuntu-20.04",
-#               "features": "",
-#               "target": "x86_64-linux-android",
-#               "artifact_name": "android-x86_64-cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "macos-11",
-#               "features": "",
-#               "target": "aarch64-apple-darwin",
-#               "artifact_name": "osx-arm64-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "macos-11",
-#               "features": "",
-#               "target": "x86_64-apple-darwin",
-#               "artifact_name": "osx-x64-cpu",
-#               "whl_local_version": "cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "macos-12",
-#               "features": "",
-#               "target": "aarch64-apple-ios",
-#               "artifact_name": "ios-arm64-cpu",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "macos-12",
-#               "features": "",
-#               "target": "aarch64-apple-ios-sim",
-#               "artifact_name": "ios-arm64-cpu-sim",
-#               "use_cuda": "false"
-#             },
-#             {
-#               "os": "macos-12",
-#               "features": "",
-#               "target": "x86_64-apple-ios",
-#               "artifact_name": "ios-x64-cpu",
-#               "use_cuda": "false"
-#             }
-#           ]
-#           EOF
-#           echo "includes=$(jq -c '' matrix.json)" >> $GITHUB_OUTPUT
-
-#   test:
-#     strategy:
-#       matrix:
-#         os: [ubuntu-latest]
-#         hoge: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
-
-#     runs-on: ${{ matrix.os }}
-
-#     steps:
-#       - name: ${{ matrix.os }}-${{ matrix.features }}
-#         run: ""
-name: dynamic matrix
-
-on: [push]
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  set-matrix:
+  strategy-matrix: # 実行対象の条件をフィルタリングする
     runs-on: ubuntu-latest
     outputs:
-      something: ${{ steps.set-matrix.outputs.value }}
+      includes: ${{ steps.vars.outputs.includes }}
     steps:
-      - name: make values
-        id: set-matrix
+      - name: declare variables
+        id: vars
         run: |
-          echo '["hoge","fuga"]' | jq -c
-          list=$(echo '["hoge","fuga"]' | jq -c)
-          echo "value=${list}" >> $GITHUB_OUTPUT
+          cat <<'EOF' > matrix.json
+          [
+            {
+              "os": "windows-2019",
+              "features": "",
+              "target": "x86_64-pc-windows-msvc",
+              "artifact_name": "windows-x64-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "windows-2019",
+              "features": "directml",
+              "target": "x86_64-pc-windows-msvc",
+              "artifact_name": "windows-x64-directml",
+              "whl_local_version": "directml",
+              "use_cuda": "false"
+            },
+            {
+              "os": "windows-2019",
+              "features": "",
+              "target": "x86_64-pc-windows-msvc",
+              "artifact_name": "windows-x64-cuda",
+              "whl_local_version": "cuda",
+              "use_cuda": "true"
+            },
+            {
+              "os": "windows-2019",
+              "features": "",
+              "target": "i686-pc-windows-msvc",
+              "artifact_name": "windows-x86-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "ubuntu-20.04",
+              "features": "",
+              "target": "x86_64-unknown-linux-gnu",
+              "artifact_name": "linux-x64-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "ubuntu-20.04",
+              "features": "",
+              "target": "x86_64-unknown-linux-gnu",
+              "artifact_name": "linux-x64-gpu",
+              "whl_local_version": "cuda",
+              "use_cuda": "true"
+            },
+            {
+              "os": "ubuntu-20.04",
+              "features": "",
+              "target": "aarch64-unknown-linux-gnu",
+              "artifact_name": "linux-arm64-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "ubuntu-20.04",
+              "features": "",
+              "target": "aarch64-linux-android",
+              "artifact_name": "android-arm64-cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "ubuntu-20.04",
+              "features": "",
+              "target": "x86_64-linux-android",
+              "artifact_name": "android-x86_64-cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "macos-11",
+              "features": "",
+              "target": "aarch64-apple-darwin",
+              "artifact_name": "osx-arm64-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "macos-11",
+              "features": "",
+              "target": "x86_64-apple-darwin",
+              "artifact_name": "osx-x64-cpu",
+              "whl_local_version": "cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "macos-12",
+              "features": "",
+              "target": "aarch64-apple-ios",
+              "artifact_name": "ios-arm64-cpu",
+              "use_cuda": "false"
+            },
+            {
+              "os": "macos-12",
+              "features": "",
+              "target": "aarch64-apple-ios-sim",
+              "artifact_name": "ios-arm64-cpu-sim",
+              "use_cuda": "false"
+            },
+            {
+              "os": "macos-12",
+              "features": "",
+              "target": "x86_64-apple-ios",
+              "artifact_name": "ios-x64-cpu",
+              "use_cuda": "false"
+            }
+          ]
+          EOF
+          list=$(cat matrix.json | jq -c)
+          echo "includes=${list}" >> $GITHUB_OUTPUT
 
-  execute:
-    needs: set-matrix
-    runs-on: ubuntu-latest
+  test:
     strategy:
-      fail-fast: false
       matrix:
-        hoge: ${{fromJson(needs.set-matrix.outputs.something)}}
+        os: [ubuntu-latest]
+        hoge: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - run: echo ${{ matrix.hoge }}
+      - name: ${{ matrix.os }}-${{ matrix.features }}
+        run: ""
