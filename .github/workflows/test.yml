@@ -9,19 +9,14 @@ on:
         type: boolean
         required: false
         default: true
-      is_simple_test:
-        description: "簡易テストとする"
-        type: boolean
-        required: false
-        default: true
 
 defaults:
   run:
     shell: bash
 
 env:
-  # 簡易テストとするかどうか。製品版ビルド時はfalse
-  IS_SIMPLE_TEST: ${{ !(github.event.inputs.is_production == true) && github.event.inputs.is_simple_test && true }}
+  # 簡易テストとするかどうか。releaseとworkflow_dispatch以外は簡易テストとする
+  IS_SIMPLE_TEST: ${{ !(github.event.release || github.event.inputs) }}
 
 jobs:
   strategy-matrix: # 実行対象の条件をフィルタリングする
