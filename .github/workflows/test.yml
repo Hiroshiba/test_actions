@@ -8,67 +8,105 @@ defaults:
     shell: bash
 
 jobs:
+  # strategy-matrix: # 実行対象の条件をフィルタリングする
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     version_or_latest: ${{ steps.vars.outputs.version_or_latest }}
+  #   steps:
+  #     - name: declare variables
+  #       id: vars
+  #       run: |
+  #         cat <<'EOF' > matrix.json
+  #         EOF
+  #         : # releaseタグ名か、workflow_dispatchでのバージョン名か、latestが入る
+  #         echo "version_or_latest=${{ github.event.release.tag_name || github.event.inputs.version || 'latest' }}" >> $GITHUB_OUTPUT
+
   test:
     strategy:
       matrix:
         include:
-          # Windows CPU
           - os: windows-2019
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-windows-x64-cpu
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-win-x64-1.13.1.zip
-            target: windows-cpu
-          # Windows DirectML
+            features: ""
+            target: x86_64-pc-windows-msvc
+            artifact_name: windows-x64-cpu
+            whl_local_version: cpu
+            use_cuda: false
           - os: windows-2019
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-windows-x64-directml
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/Microsoft.ML.OnnxRuntime.DirectML.1.13.1.zip
-            directml_url: https://www.nuget.org/api/v2/package/Microsoft.AI.DirectML/1.10.0
-            target: windows-directml
-          # Windows NVIDIA GPU
+            features: directml
+            target: x86_64-pc-windows-msvc
+            artifact_name: windows-x64-directml
+            whl_local_version: directml
+            use_cuda: false
           - os: windows-2019
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-windows-x64-cuda
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-win-x64-gpu-1.13.1.zip
-            cuda_version: "11.6.2"
-            cudnn_url: https://developer.download.nvidia.com/compute/redist/cudnn/v8.4.1/local_installers/11.6/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive.zip
-            zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
-            target: windows-nvidia
-          # Mac CPU (x64 arch only)
+            features: ""
+            target: x86_64-pc-windows-msvc
+            artifact_name: windows-x64-cuda
+            whl_local_version: cuda
+            use_cuda: true
+          - os: windows-2019
+            features: ""
+            target: i686-pc-windows-msvc
+            artifact_name: windows-x86-cpu
+            whl_local_version: cpu
+            use_cuda: false
+          - os: ubuntu-20.04
+            features: ""
+            target: x86_64-unknown-linux-gnu
+            artifact_name: linux-x64-cpu
+            whl_local_version: cpu
+            use_cuda: false
+          - os: ubuntu-20.04
+            features: ""
+            target: x86_64-unknown-linux-gnu
+            artifact_name: linux-x64-gpu
+            whl_local_version: cuda
+            use_cuda: true
+          - os: ubuntu-20.04
+            features: ""
+            target: aarch64-unknown-linux-gnu
+            artifact_name: linux-arm64-cpu
+            whl_local_version: cpu
+            use_cuda: false
+          - os: ubuntu-20.04
+            features: ""
+            target: aarch64-linux-android
+            artifact_name: android-arm64-cpu
+            use_cuda: false
+          - os: ubuntu-20.04
+            features: ""
+            target: x86_64-linux-android
+            artifact_name: android-x86_64-cpu
+            use_cuda: false
           - os: macos-11
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-osx-x64-cpu
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-osx-x86_64-1.13.1.tgz
-            target: macos-x64
-          # Linux CPU
-          - os: ubuntu-20.04
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-linux-x64-cpu
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-linux-x64-1.13.1.tgz
-            target: linux-cpu
-          # Linux NVIDIA GPU
-          - os: ubuntu-20.04
-            architecture: "x64"
-            voicevox_core_asset_prefix: voicevox_core-linux-x64-gpu
-            onnxruntime_url: https://github.com/microsoft/onnxruntime/releases/download/v1.13.1/onnxruntime-linux-x64-gpu-1.13.1.tgz
-            cuda_version: "11.6.2"
-            cudnn_url: https://developer.download.nvidia.com/compute/redist/cudnn/v8.4.1/local_installers/11.6/cudnn-linux-x86_64-8.4.1.50_cuda11.6-archive.tar.xz
-            target: linux-nvidia
+            features: ""
+            target: aarch64-apple-darwin
+            artifact_name: osx-arm64-cpu
+            whl_local_version: cpu
+            use_cuda: false
+          - os: macos-11
+            features: ""
+            target: x86_64-apple-darwin
+            artifact_name: osx-x64-cpu
+            whl_local_version: cpu
+            use_cuda: false
+          - os: macos-12
+            features: ""
+            target: aarch64-apple-ios
+            artifact_name: ios-arm64-cpu
+            use_cuda: false
+          - os: macos-12
+            features: ""
+            target: aarch64-apple-ios-sim
+            artifact_name: ios-arm64-cpu-sim
+            use_cuda: false
+          - os: macos-12
+            features: ""
+            target: x86_64-apple-ios
+            artifact_name: ios-x64-cpu
+            use_cuda: false
 
     runs-on: ${{ matrix.os }}
 
-    env:
-      sed: ${{ matrix.os == 'macos-11' && 'gsed' || 'sed' }}
-      split: ${{ matrix.os == 'macos-11' && 'gsplit' || 'split' }}
-
     steps:
-      - name: Install GNU coreutils
-        if: startsWith(matrix.os, 'macos-')
-        run: |
-          brew install gnu-sed coreutils
-
-      - run: which ${{ env.sed }}
-      - run: which ${{ env.split }}
-
-      - run: which $sed
-      - run: which $split
+      - name: ${{ matrix.os }}-${{ matrix.features }}
+        run: ""
