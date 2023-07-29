@@ -128,7 +128,7 @@ jobs:
           ]
           EOF
           list=$(cat matrix.json | jq -c)
-          echo "includes =${list}" >> $GITHUB_OUTPUT
+          echo "includes=${list}" >> $GITHUB_OUTPUT
 
   test:
     needs: strategy-matrix
