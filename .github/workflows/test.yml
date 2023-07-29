@@ -16,6 +16,7 @@ jobs:
       - name: declare variables
         id: vars
         run: |
+          set -eux
           cat <<'EOF' > matrix.json
           [
             {
