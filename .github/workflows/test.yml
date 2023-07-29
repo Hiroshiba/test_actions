@@ -24,7 +24,8 @@ jobs:
               "target": "x86_64-pc-windows-msvc",
               "artifact_name": "windows-x64-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "windows-2019",
@@ -32,7 +33,8 @@ jobs:
               "target": "x86_64-pc-windows-msvc",
               "artifact_name": "windows-x64-directml",
               "whl_local_version": "directml",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": false
             },
             {
               "os": "windows-2019",
@@ -40,7 +42,8 @@ jobs:
               "target": "x86_64-pc-windows-msvc",
               "artifact_name": "windows-x64-cuda",
               "whl_local_version": "cuda",
-              "use_cuda": "true"
+              "use_cuda": true,
+              "can_skip_in_text": true
             },
             {
               "os": "windows-2019",
@@ -48,7 +51,8 @@ jobs:
               "target": "i686-pc-windows-msvc",
               "artifact_name": "windows-x86-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "ubuntu-20.04",
@@ -56,7 +60,8 @@ jobs:
               "target": "x86_64-unknown-linux-gnu",
               "artifact_name": "linux-x64-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "ubuntu-20.04",
@@ -64,7 +69,8 @@ jobs:
               "target": "x86_64-unknown-linux-gnu",
               "artifact_name": "linux-x64-gpu",
               "whl_local_version": "cuda",
-              "use_cuda": "true"
+              "use_cuda": true,
+              "can_skip_in_text": false
             },
             {
               "os": "ubuntu-20.04",
@@ -72,21 +78,24 @@ jobs:
               "target": "aarch64-unknown-linux-gnu",
               "artifact_name": "linux-arm64-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "ubuntu-20.04",
               "features": "",
               "target": "aarch64-linux-android",
               "artifact_name": "android-arm64-cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "ubuntu-20.04",
               "features": "",
               "target": "x86_64-linux-android",
               "artifact_name": "android-x86_64-cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "macos-11",
@@ -94,7 +103,8 @@ jobs:
               "target": "aarch64-apple-darwin",
               "artifact_name": "osx-arm64-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "macos-11",
@@ -102,32 +112,39 @@ jobs:
               "target": "x86_64-apple-darwin",
               "artifact_name": "osx-x64-cpu",
               "whl_local_version": "cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "macos-12",
               "features": "",
               "target": "aarch64-apple-ios",
               "artifact_name": "ios-arm64-cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "macos-12",
               "features": "",
               "target": "aarch64-apple-ios-sim",
               "artifact_name": "ios-arm64-cpu-sim",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             },
             {
               "os": "macos-12",
               "features": "",
               "target": "x86_64-apple-ios",
               "artifact_name": "ios-x64-cpu",
-              "use_cuda": "false"
+              "use_cuda": false,
+              "can_skip_in_text": true
             }
           ]
           EOF
-          list=$(cat matrix.json | jq -c)
+
+          # can_skip_in_textがtrueのものを除外する
+          list=$(cat matrix.json | jq -c '[.[] | select(.can_skip_in_text == false)]')
+
           echo "includes=${list}" >> $GITHUB_OUTPUT
 
   test:
