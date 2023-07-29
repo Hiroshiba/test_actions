@@ -11,7 +11,7 @@ jobs:
   strategy-matrix: # 実行対象の条件をフィルタリングする
     runs-on: ubuntu-latest
     outputs:
-      something: ${{ steps.vars.outputs.value  }}
+      something: ${{ steps.vars.outputs.value }}
     steps:
       - name: declare variables
         id: vars
@@ -134,10 +134,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        hoge: ${{ fromJson(needs.strategy-matrix.outputs.something) }}
+        # hoge: ${{ fromJson(needs.strategy-matrix.outputs.something) }}
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: ${{ matrix.os }}-${{ matrix.features }}
-        run: ""
+        run: |
+          echo ${{ needs.strategy-matrix.outputs.something }}
