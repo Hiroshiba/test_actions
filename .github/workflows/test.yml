@@ -32,7 +32,7 @@ jobs:
       - name: declare variables
         id: strategy-matrix
         run: |
-          cat <<'EOF' > matrix.json
+          includes=$(cat <<'EOF'
           [
             {
               "os": "windows-2019",
@@ -158,12 +158,10 @@ jobs:
           ]
           EOF
 
-          # can_skip_in_simple_testがtrueのものを除外する
-          includes=$(
-            cat matrix.json |
-            jq -c '[.[] | select(.can_skip_in_simple_test == false) | del(.can_skip_in_simple_test)]'
-          )
-
+          if ${{ env.IS_SIMPLE_TEST }}; then
+            includes=$(echo $includes | jq -c '[.[] | select(.can_skip_in_simple_test == false)]')
+          fi
+          includes=$(echo $includes | jq -c '[.[] | del(.can_skip_in_simple_test)]')
           echo "includes=${includes}" >> $GITHUB_OUTPUT
 
   test:
