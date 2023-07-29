@@ -32,8 +32,7 @@ jobs:
       - name: declare variables
         id: strategy-matrix
         run: |
-          includes=$(cat <<'EOF'
-          [
+          includes='[
             {
               "os": "windows-2019",
               "features": "",
@@ -155,9 +154,7 @@ jobs:
               "use_cuda": false,
               "can_skip_in_simple_test": true
             }
-          ]
-          EOF
-          )
+          ]'
 
           if ${{ env.IS_SIMPLE_TEST }}; then
             includes=$(echo $includes | jq -c '[.[] | select(.can_skip_in_simple_test == false)]')
