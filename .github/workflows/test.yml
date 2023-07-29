@@ -21,7 +21,7 @@ defaults:
 
 env:
   # 簡易テストとするかどうか。製品版ビルド時はfalse
-  IS_SIMPLE_TEST: ${{ github.event.inputs.is_production || github.event.inputs.is_simple_test || true }}
+  IS_SIMPLE_TEST: ${{ !(github.event.inputs.is_production == true) && github.event.inputs.is_simple_test && true }}
 
 jobs:
   strategy-matrix: # 実行対象の条件をフィルタリングする
