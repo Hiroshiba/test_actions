@@ -11,10 +11,10 @@ jobs:
   strategy-matrix: # 実行対象の条件をフィルタリングする
     runs-on: ubuntu-latest
     outputs:
-      something: ${{ steps.vars.outputs.value }}
+      includes: ${{ steps.strategy-matrix.outputs.includes }}
     steps:
       - name: declare variables
-        id: vars
+        id: strategy-matrix
         run: |
           cat <<'EOF' > matrix.json
           [
@@ -128,17 +128,16 @@ jobs:
           ]
           EOF
           list=$(cat matrix.json | jq -c)
-          echo "value =${list}" >> $GITHUB_OUTPUT
+          echo "includes =${list}" >> $GITHUB_OUTPUT
 
   test:
+    needs: strategy-matrix
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        # hoge: ${{ fromJson(needs.strategy-matrix.outputs.something) }}
+        include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: ${{ matrix.os }}-${{ matrix.features }}
-        run: |
-          echo ${{ needs.strategy-matrix.outputs.something }}
+        run: ""
