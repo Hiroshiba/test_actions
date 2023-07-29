@@ -134,10 +134,12 @@ jobs:
     needs: strategy-matrix
     strategy:
       matrix:
-        include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
+        os: [ubuntu-20.04]
+        # include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: ${{ matrix.os }}-${{ matrix.features }}
-        run: ""
+        run: |
+          echo ${{ needs.strategy-matrix.outputs.includes }}
