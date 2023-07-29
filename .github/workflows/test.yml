@@ -22,6 +22,10 @@ jobs:
   #         echo "version_or_latest=${{ github.event.release.tag_name || github.event.inputs.version || 'latest' }}" >> $GITHUB_OUTPUT
 
   test:
+    env:
+      sed: ${{ matrix.os == 'macos-11' && 'gsed' || 'sed' }}
+      split: ${{ matrix.os == 'macos-11' && 'gsplit' || 'split' }}
+
     strategy:
       matrix:
         include:
