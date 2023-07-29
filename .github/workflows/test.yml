@@ -127,7 +127,7 @@ jobs:
             }
           ]
           EOF
-          echo "includes=$(jq -c '' matrix.json)"
+          echo "includes=$(jq -c '' matrix.json)" >> $GITHUB_OUTPUT
 
   test:
     strategy:
