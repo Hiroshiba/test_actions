@@ -104,7 +104,7 @@ jobs:
               "artifact_name": "osx-arm64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_text": false
             },
             {
               "os": "macos-11",
@@ -151,7 +151,6 @@ jobs:
     needs: strategy-matrix
     strategy:
       matrix:
-        # os: [ubuntu-20.04]
         include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
 
     runs-on: ${{ matrix.os }}
