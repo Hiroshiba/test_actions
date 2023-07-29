@@ -2,10 +2,26 @@ name: test
 
 on:
   push:
+  workflow_dispatch:
+    inputs:
+      is_production:
+        description: "製品版をビルドする"
+        type: boolean
+        required: false
+        default: true
+      is_simple_test:
+        description: "簡易テストとする"
+        type: boolean
+        required: false
+        default: true
 
 defaults:
   run:
     shell: bash
+
+env:
+  # 簡易テストとするかどうか。製品版ビルド時はfalse
+  IS_SIMPLE_TEST: ${{ github.event.inputs.is_production || github.event.inputs.is_simple_test || true }}
 
 jobs:
   strategy-matrix: # 実行対象の条件をフィルタリングする
@@ -25,7 +41,7 @@ jobs:
               "artifact_name": "windows-x64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "windows-2019",
@@ -34,7 +50,7 @@ jobs:
               "artifact_name": "windows-x64-directml",
               "whl_local_version": "directml",
               "use_cuda": false,
-              "can_skip_in_text": false
+              "can_skip_in_simple_test": false
             },
             {
               "os": "windows-2019",
@@ -43,7 +59,7 @@ jobs:
               "artifact_name": "windows-x64-cuda",
               "whl_local_version": "cuda",
               "use_cuda": true,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "windows-2019",
@@ -52,7 +68,7 @@ jobs:
               "artifact_name": "windows-x86-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "ubuntu-20.04",
@@ -61,7 +77,7 @@ jobs:
               "artifact_name": "linux-x64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "ubuntu-20.04",
@@ -70,7 +86,7 @@ jobs:
               "artifact_name": "linux-x64-gpu",
               "whl_local_version": "cuda",
               "use_cuda": true,
-              "can_skip_in_text": false
+              "can_skip_in_simple_test": false
             },
             {
               "os": "ubuntu-20.04",
@@ -79,7 +95,7 @@ jobs:
               "artifact_name": "linux-arm64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "ubuntu-20.04",
@@ -87,7 +103,7 @@ jobs:
               "target": "aarch64-linux-android",
               "artifact_name": "android-arm64-cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "ubuntu-20.04",
@@ -95,7 +111,7 @@ jobs:
               "target": "x86_64-linux-android",
               "artifact_name": "android-x86_64-cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "macos-11",
@@ -104,7 +120,7 @@ jobs:
               "artifact_name": "osx-arm64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": false
+              "can_skip_in_simple_test": false
             },
             {
               "os": "macos-11",
@@ -113,7 +129,7 @@ jobs:
               "artifact_name": "osx-x64-cpu",
               "whl_local_version": "cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "macos-12",
@@ -121,7 +137,7 @@ jobs:
               "target": "aarch64-apple-ios",
               "artifact_name": "ios-arm64-cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "macos-12",
@@ -129,7 +145,7 @@ jobs:
               "target": "aarch64-apple-ios-sim",
               "artifact_name": "ios-arm64-cpu-sim",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             },
             {
               "os": "macos-12",
@@ -137,15 +153,15 @@ jobs:
               "target": "x86_64-apple-ios",
               "artifact_name": "ios-x64-cpu",
               "use_cuda": false,
-              "can_skip_in_text": true
+              "can_skip_in_simple_test": true
             }
           ]
           EOF
 
-          # can_skip_in_textがtrueのものを除外する
+          # can_skip_in_simple_testがtrueのものを除外する
           includes=$(
             cat matrix.json |
-            jq -c '[.[] | select(.can_skip_in_text == false) | del(.can_skip_in_text)]'
+            jq -c '[.[] | select(.can_skip_in_simple_test == false) | del(.can_skip_in_simple_test)]'
           )
 
           echo "includes=${includes}" >> $GITHUB_OUTPUT
