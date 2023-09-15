@@ -14,15 +14,20 @@ jobs:
   config:
     runs-on: ubuntu-latest
     outputs:
-      deploy: ${{ env.VERSION != '0.0.0' }}
+      is_true: "true"
+      is_false: "false"
     steps:
       - name: a
-        run: echo ${{ env.VERSION != '0.0.0' }}
+        run: echo hoge
 
   build_and_deploy:
     needs: config
     runs-on: ubuntu-latest
     steps:
-      - name: Upload to Release
-        if: needs.config.outputs.deploy == 'true'
-        run: echo ===${{ needs.config.outputs.deploy }}===
+      - name: ${{ fromJson(needs.config.outputs) }}
+        if: fromJson(needs.config.outputs.is_true)
+        run: echo true
+
+      - name: ${{ fromJson(needs.config.outputs) }}
+        if: fromJson(needs.config.outputs.is_false)
+        run: echo false
