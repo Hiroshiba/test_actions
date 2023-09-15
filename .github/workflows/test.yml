@@ -25,4 +25,4 @@ jobs:
     steps:
       - name: Upload to Release
         if: needs.config.outputs.deploy
-        run: echo ${{ needs.config.outputs.deploy }}
+        run: echo ===${{ needs.config.outputs.deploy }}===
