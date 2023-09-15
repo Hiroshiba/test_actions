@@ -24,10 +24,18 @@ jobs:
     needs: config
     runs-on: ubuntu-latest
     steps:
-      - name: ${{ fromJson(needs.config.outputs) }}
+      - name: "true string"
         if: fromJson(needs.config.outputs.is_true)
-        run: echo true
+        run: echo ${{ fromJson(needs.config.outputs.is_true) }}
 
-      - name: ${{ fromJson(needs.config.outputs) }}
+      - name: "true bool"
+        if: fromJson(true)
+        run: echo ${{ fromJson(true) }}
+
+      - name: "false string"
         if: fromJson(needs.config.outputs.is_false)
         run: echo false
+
+      - name: "false bool"
+        if: fromJson(false)
+        run: echo ${{ fromJson(false) }}
