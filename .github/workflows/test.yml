@@ -2,170 +2,27 @@ name: test
 
 on:
   push:
-  workflow_dispatch:
-    inputs:
-      is_production:
-        description: "製品版をビルドする"
-        type: boolean
-        required: false
-        default: true
+
+env:
+  VERSION: "0.0.0"
 
 defaults:
   run:
     shell: bash
 
-env:
-  # 簡易テストとするかどうか。releaseとworkflow_dispatch以外は簡易テストとする
-  IS_SIMPLE_TEST: ${{ !(github.event.release || github.event.inputs) }}
-
 jobs:
-  strategy-matrix: # 実行対象の条件をフィルタリングする
+  config:
     runs-on: ubuntu-latest
     outputs:
-      includes: ${{ steps.strategy-matrix.outputs.includes }}
+      deploy: ${{ env.VERSION != '0.0.0' }}
     steps:
-      - name: declare variables
-        id: strategy-matrix
-        run: |
-          includes='[
-            {
-              "os": "windows-2019",
-              "features": "",
-              "target": "x86_64-pc-windows-msvc",
-              "artifact_name": "windows-x64-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "windows-2019",
-              "features": "directml",
-              "target": "x86_64-pc-windows-msvc",
-              "artifact_name": "windows-x64-directml",
-              "whl_local_version": "directml",
-              "use_cuda": false,
-              "can_skip_in_simple_test": false
-            },
-            {
-              "os": "windows-2019",
-              "features": "",
-              "target": "x86_64-pc-windows-msvc",
-              "artifact_name": "windows-x64-cuda",
-              "whl_local_version": "cuda",
-              "use_cuda": true,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "windows-2019",
-              "features": "",
-              "target": "i686-pc-windows-msvc",
-              "artifact_name": "windows-x86-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "ubuntu-20.04",
-              "features": "",
-              "target": "x86_64-unknown-linux-gnu",
-              "artifact_name": "linux-x64-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "ubuntu-20.04",
-              "features": "",
-              "target": "x86_64-unknown-linux-gnu",
-              "artifact_name": "linux-x64-gpu",
-              "whl_local_version": "cuda",
-              "use_cuda": true,
-              "can_skip_in_simple_test": false
-            },
-            {
-              "os": "ubuntu-20.04",
-              "features": "",
-              "target": "aarch64-unknown-linux-gnu",
-              "artifact_name": "linux-arm64-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "ubuntu-20.04",
-              "features": "",
-              "target": "aarch64-linux-android",
-              "artifact_name": "android-arm64-cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "ubuntu-20.04",
-              "features": "",
-              "target": "x86_64-linux-android",
-              "artifact_name": "android-x86_64-cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "macos-11",
-              "features": "",
-              "target": "aarch64-apple-darwin",
-              "artifact_name": "osx-arm64-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": false
-            },
-            {
-              "os": "macos-11",
-              "features": "",
-              "target": "x86_64-apple-darwin",
-              "artifact_name": "osx-x64-cpu",
-              "whl_local_version": "cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "macos-12",
-              "features": "",
-              "target": "aarch64-apple-ios",
-              "artifact_name": "ios-arm64-cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "macos-12",
-              "features": "",
-              "target": "aarch64-apple-ios-sim",
-              "artifact_name": "ios-arm64-cpu-sim",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            },
-            {
-              "os": "macos-12",
-              "features": "",
-              "target": "x86_64-apple-ios",
-              "artifact_name": "ios-x64-cpu",
-              "use_cuda": false,
-              "can_skip_in_simple_test": true
-            }
-          ]'
+      - name: a
+        run: echo ${{ env.VERSION != '0.0.0' }}
 
-          if ${{ env.IS_SIMPLE_TEST }}; then
-            includes=$(echo $includes | jq -c '[.[] | select(.can_skip_in_simple_test == false)]')
-          fi
-          includes=$(echo $includes | jq -c '[.[] | del(.can_skip_in_simple_test)]')
-          echo "includes=${includes}" >> $GITHUB_OUTPUT
-
-  test:
-    needs: strategy-matrix
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.strategy-matrix.outputs.includes) }}
-
-    runs-on: ${{ matrix.os }}
-
+  build_and_deploy:
+    needs: config
+    runs-on: ubuntu-latest
     steps:
-      - name: ${{ matrix.os }}-${{ matrix.features }}
-        run: |
-          echo "${{ needs.strategy-matrix.outputs.includes }}"
+      - name: Upload to Release
+        if: needs.config.outputs.deploy
+        run: echo ${{ needs.config.outputs.deploy }}
