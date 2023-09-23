@@ -9,6 +9,14 @@ defaults:
     shell: bash
 
 jobs:
+  bug-run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "hello"
+          echo "world"
+          echo "$hgoe"
+
   use-reusable-workflow:
     permissions:
       contents: read
