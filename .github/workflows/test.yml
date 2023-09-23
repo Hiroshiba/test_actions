@@ -3,39 +3,12 @@ name: test
 on:
   push:
 
-env:
-  VERSION: "1.0.0"
-
 defaults:
   run:
     shell: bash
 
 jobs:
-  config:
-    runs-on: ubuntu-latest
-    outputs:
-      is_true: "true"
-      is_false: "false"
-    steps:
-      - name: a
-        run: echo hoge
-
-  build_and_deploy:
-    needs: config
-    runs-on: ubuntu-latest
-    steps:
-      - name: "true string"
-        if: fromJson(needs.config.outputs.is_true)
-        run: echo ${{ fromJson(needs.config.outputs.is_true) }}
-
-      - name: "true bool"
-        if: fromJson(true)
-        run: echo ${{ fromJson(true) }}
-
-      - name: "false string"
-        if: fromJson(needs.config.outputs.is_false)
-        run: echo false
-
-      - name: "false bool"
-        if: fromJson(false)
-        run: echo ${{ fromJson(false) }}
+  use-reusable-workflow:
+    uses: Hiroshiba/test_workflow_call/.github/workflows/shared.yml@main
+    # with:
+    #   name: ${{ github.repository }}
