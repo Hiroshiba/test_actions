@@ -2,23 +2,35 @@ name: test
 
 on:
   push:
+  pull_request:
 
 defaults:
   run:
     shell: bash
 
 jobs:
+  bug-run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "hello"
+          echo "world"
+          echo "$hgoe"
+          echo $hgoe
+          asdpfiouaspodiuf
+        shell: bash
+
   use-reusable-workflow:
     permissions:
       contents: read
       packages: read
       statuses: write
     uses: Hiroshiba/test_workflow_call/.github/workflows/shared.yml@main
-    with:
-      super_linter_env_vars: |
-        VALIDATE_PYTHON=false
-        VALIDATE_PYTHON_BLACK=false
-        VALIDATE_PYTHON_FLAKE8=false
-        VALIDATE_PYTHON_ISORT=false
-        VALIDATE_PYTHON_MYPY=false
-        VALIDATE_PYTHON_PYLINT=false
+    # with:
+    #   super_linter_env_vars: |
+    #     VALIDATE_PYTHON=false
+    #     VALIDATE_PYTHON_BLACK=false
+    #     VALIDATE_PYTHON_FLAKE8=false
+    #     VALIDATE_PYTHON_ISORT=false
+    #     VALIDATE_PYTHON_MYPY=false
+    #     VALIDATE_PYTHON_PYLINT=false
