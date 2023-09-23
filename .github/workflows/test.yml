@@ -9,6 +9,10 @@ defaults:
 
 jobs:
   use-reusable-workflow:
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
     uses: Hiroshiba/test_workflow_call/.github/workflows/shared.yml@main
     # with:
     #   name: ${{ github.repository }}
