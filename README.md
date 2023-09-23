@@ -1,2 +1,3 @@
 # test_actions
-github actionsをサクッと試す場所
+
+GitHub Actions をサクッと試す場所
