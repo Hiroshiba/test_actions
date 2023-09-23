@@ -1,0 +1,18 @@
+name: test
+
+on:
+  push:
+
+
+
+
+defaults:
+
+
+  run:
+    shell: bash
+
+jobs:
+  use-reusable-workflow:
+    uses: aHiroshiba/test_workflow_call/.github/workflows/shared.yml@main
+
