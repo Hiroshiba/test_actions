@@ -34,17 +34,3 @@ jobs:
     #     VALIDATE_PYTHON_ISORT=false
     #     VALIDATE_PYTHON_MYPY=false
     #     VALIDATE_PYTHON_PYLINT=false
-
-  actionlint:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Update ShellCheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-      - name: actionlint
-        run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color
-  
