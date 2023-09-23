@@ -16,6 +16,7 @@ jobs:
           echo "hello"
           echo "world"
           echo "$hgoe"
+          asdpfiouaspodiuf
 
   use-reusable-workflow:
     permissions:
