@@ -27,11 +27,17 @@ jobs:
       - name: check github.event.inputs.is_true == true
         if: github.event.inputs.is_true == true
         run: echo dummy
+      - name: check !github.event.inputs.is_true
+        if: !github.event.inputs.is_true
+        run: echo dummy
       - name: check inputs.is_true == 'true'
         if: inputs.is_true == 'true'
         run: echo dummy
       - name: check inputs.is_true == true
         if: inputs.is_true == true
+        run: echo dummy
+      - name: check !inputs.is_true
+        if: !inputs.is_true
         run: echo dummy
 
   actionlint:
