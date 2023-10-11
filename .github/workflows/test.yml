@@ -24,21 +24,29 @@ jobs:
   bug-run:
     runs-on: ubuntu-latest
     steps:
-      - name: github.event.inputs.is_true && 'trueっぽい' || 'falseっぽい' → ${{ github.event.inputs.is_true && 'trueっぽい' || 'falseっぽい' }}
+      - name: fromJson(github.event.inputs.is_true)
+        if: fromJson(github.event.inputs.is_true)
         run: echo dummy
-      - name: fromJson(github.event.inputs.is_true) && 'trueっぽい' || 'falseっぽい' → ${{ fromJson(github.event.inputs.is_true) && 'trueっぽい' || 'falseっぽい' }}
+      - name: fromJson(inputs.is_true)
+        if: fromJson(inputs.is_true)
         run: echo dummy
-      - name: inputs.is_true && 'trueっぽい' || 'falseっぽい' → ${{ inputs.is_true && 'trueっぽい' || 'falseっぽい' }}
+      - name: ! fromJson(github.event.inputs.is_true)
+        if: ! fromJson(github.event.inputs.is_true)
         run: echo dummy
-      - name: fromJson(inputs.is_true) && 'trueっぽい' || 'falseっぽい' → ${{ fromJson(inputs.is_true) && 'trueっぽい' || 'falseっぽい' }}
+      - name: ! fromJson(inputs.is_true)
+        if: ! fromJson(inputs.is_true)
         run: echo dummy
-      - name: github.event.inputs.is_false && 'trueっぽい' || 'falseっぽい' → ${{ github.event.inputs.is_false && 'trueっぽい' || 'falseっぽい' }}
+      - name: fromJson(github.event.inputs.is_false)
+        if: fromJson(github.event.inputs.is_false)
         run: echo dummy
-      - name: fromJson(github.event.inputs.is_false) && 'trueっぽい' || 'falseっぽい' → ${{ fromJson(github.event.inputs.is_false) && 'trueっぽい' || 'falseっぽい' }}
+      - name: fromJson(inputs.is_false)
+        if: fromJson(inputs.is_false)
         run: echo dummy
-      - name: inputs.is_false && 'trueっぽい' || 'falseっぽい' → ${{ inputs.is_false && 'trueっぽい' || 'falseっぽい' }}
+      - name: ! fromJson(github.event.inputs.is_false)
+        if: ! fromJson(github.event.inputs.is_false)
         run: echo dummy
-      - name: fromJson(inputs.is_false) && 'trueっぽい' || 'falseっぽい' → ${{ fromJson(inputs.is_false) && 'trueっぽい' || 'falseっぽい' }}
+      - name: ! fromJson(inputs.is_false)
+        if: ! fromJson(inputs.is_false)
         run: echo dummy
 
   # use-reusable-workflow:
