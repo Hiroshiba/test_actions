@@ -27,6 +27,12 @@ jobs:
       - name: check github.event.inputs.is_true == true
         if: github.event.inputs.is_true == true
         run: echo dummy
+      - name: check inputs.is_true == 'true'
+        if: inputs.is_true == 'true'
+        run: echo dummy
+      - name: check inputs.is_true == true
+        if: inputs.is_true == true
+        run: echo dummy
 
   actionlint:
     runs-on: ubuntu-22.04
