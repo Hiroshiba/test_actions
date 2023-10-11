@@ -1,10 +1,7 @@
 name: check test
 
-# on:
-#   push:
-#   pull_request:
-
 on:
+  push:
   workflow_dispatch:
     inputs:
       is_true:
@@ -48,6 +45,19 @@ jobs:
       - name: check !fromJson(inputs.is_false)
         if: ${{ !fromJson(inputs.is_false) }}
         run: echo dummy
+
+  actionlint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: actionlint
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
 
   # use-reusable-workflow:
   #   permissions:
