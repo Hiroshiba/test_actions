@@ -30,11 +30,11 @@ jobs:
       - name: fromJson(inputs.is_true)
         if: ${{ fromJson(inputs.is_true) }}
         run: echo dummy
-      - name: fromJson(github.event.inputs.is_true) == true
-        if: ${{ fromJson(github.event.inputs.is_true) == true }}
+      - name: !fromJson(github.event.inputs.is_true)
+        if: ${{ !fromJson(github.event.inputs.is_true) }}
         run: echo dummy
-      - name: fromJson(inputs.is_true) == true
-        if: ${{ fromJson(inputs.is_true) == true }}
+      - name: !fromJson(inputs.is_true)
+        if: ${{ !fromJson(inputs.is_true) }}
         run: echo dummy
       - name: fromJson(github.event.inputs.is_false)
         if: ${{ fromJson(github.event.inputs.is_false) }}
@@ -42,11 +42,11 @@ jobs:
       - name: fromJson(inputs.is_false)
         if: ${{ fromJson(inputs.is_false) }}
         run: echo dummy
-      - name: fromJson(github.event.inputs.is_false) == true
-        if: ${{ fromJson(github.event.inputs.is_false) == true }}
+      - name: !fromJson(github.event.inputs.is_false)
+        if: ${{ !fromJson(github.event.inputs.is_false) }}
         run: echo dummy
-      - name: fromJson(inputs.is_false) == true
-        if: ${{ fromJson(inputs.is_false) == true }}
+      - name: !fromJson(inputs.is_false)
+        if: ${{ !fromJson(inputs.is_false) }}
         run: echo dummy
 
   # use-reusable-workflow:
