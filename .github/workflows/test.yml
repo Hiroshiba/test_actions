@@ -21,29 +21,11 @@ jobs:
   bug-run:
     runs-on: ubuntu-latest
     steps:
-      - name: check fromJson(github.event.inputs.is_true)
-        if: ${{ fromJson(github.event.inputs.is_true) }}
+      - name: check github.event.inputs.is_true == 'true'
+        if: github.event.inputs.is_true == 'true'
         run: echo dummy
-      - name: check fromJson(inputs.is_true)
-        if: ${{ fromJson(inputs.is_true) }}
-        run: echo dummy
-      - name: check !fromJson(github.event.inputs.is_true)
-        if: ${{ !fromJson(github.event.inputs.is_true) }}
-        run: echo dummy
-      - name: check !fromJson(inputs.is_true)
-        if: ${{ !fromJson(inputs.is_true) }}
-        run: echo dummy
-      - name: check fromJson(github.event.inputs.is_false)
-        if: ${{ fromJson(github.event.inputs.is_false) }}
-        run: echo dummy
-      - name: check fromJson(inputs.is_false)
-        if: ${{ fromJson(inputs.is_false) }}
-        run: echo dummy
-      - name: check !fromJson(github.event.inputs.is_false)
-        if: ${{ !fromJson(github.event.inputs.is_false) }}
-        run: echo dummy
-      - name: check !fromJson(inputs.is_false)
-        if: ${{ !fromJson(inputs.is_false) }}
+      - name: check github.event.inputs.is_true == true
+        if: github.event.inputs.is_true == true
         run: echo dummy
 
   actionlint:
