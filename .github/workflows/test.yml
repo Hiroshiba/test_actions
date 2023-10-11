@@ -24,13 +24,29 @@ jobs:
   bug-run:
     runs-on: ubuntu-latest
     steps:
+      - name: github.event.inputs.is_true && 'trueっぽい' || 'falseっぽい' ${{ github.event.inputs.is_true && 'trueっぽい' || 'falseっぽい' }}
+        run: echo dummy
       - name: github.event.inputs.is_true == 'true' ${{ github.event.inputs.is_true == 'true' }}
         run: echo dummy
-      - name: github.event.inputs.is_false == 'true' ${{ github.event.inputs.is_false == 'true' }}
+      - name: github.event.inputs.is_true == true ${{ github.event.inputs.is_true == true }}
+        run: echo dummy
+      - name: inputs.is_true && 'trueっぽい' || 'falseっぽい' ${{ inputs.is_true && 'trueっぽい' || 'falseっぽい' }}
         run: echo dummy
       - name: inputs.is_true == 'true' ${{ inputs.is_true == 'true' }}
         run: echo dummy
+      - name: inputs.is_true == true ${{ inputs.is_true == true }}
+        run: echo dummy
+      - name: github.event.inputs.is_false && 'trueっぽい' || 'falseっぽい' ${{ github.event.inputs.is_false && 'trueっぽい' || 'falseっぽい' }}
+        run: echo dummy
+      - name: github.event.inputs.is_false == 'true' ${{ github.event.inputs.is_false == 'true' }}
+        run: echo dummy
+      - name: github.event.inputs.is_false == true ${{ github.event.inputs.is_false == true }}
+        run: echo dummy
+      - name: inputs.is_false && 'trueっぽい' || 'falseっぽい' ${{ inputs.is_false && 'trueっぽい' || 'falseっぽい' }}
+        run: echo dummy
       - name: inputs.is_false == 'true' ${{ inputs.is_false == 'true' }}
+        run: echo dummy
+      - name: inputs.is_false == true ${{ inputs.is_false == true }}
         run: echo dummy
 
   # use-reusable-workflow:
