@@ -21,6 +21,8 @@ jobs:
   bug-run:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: check github.event.inputs.is_true == 'true'
         if: github.event.inputs.is_true == 'true'
         run: echo dummy
