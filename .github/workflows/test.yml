@@ -9,7 +9,10 @@ defaults:
 jobs:
   # 全OSで実行lsしてwcで行数を数えるコードを叩いてみる
   check:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Run ls
         run: ls
