@@ -18,8 +18,18 @@ defaults:
     shell: bash
 
 jobs:
-  bug-run:
-    runs-on: ubuntu-20.04
+  check:
+    runs-on:
+      - ubuntu-latest
+      - windows-latest
+      - macos-latest
     steps:
+      - name: lsしてwcで行数を数えるコードを叩いてみる
+        run: |
+          set -eux
+          ls
+          echo "---"
+          ls | wc -l
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
