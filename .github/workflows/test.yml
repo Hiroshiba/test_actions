@@ -55,6 +55,8 @@ jobs:
         include:
           - os: macos-11
             target: macos-x64
+          - os: macos-latest
+            target: macos-x64
 
     runs-on: ${{ matrix.os }}
 
