@@ -83,8 +83,11 @@ jobs:
         if: startsWith(matrix.target, 'linux') || startsWith(matrix.target, 'macos')
         run: chmod +x dist/run
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - name: run dist/run
+        run: ./dist/run
+
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
 
       # - name: <Setup> Install Python test dependencies
       #   run: |
