@@ -52,18 +52,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
-            target: linux-cpu
-          - os: ubuntu-20.04
-            target: linux-nvidia
           - os: macos-11
             target: macos-x64
-          - os: windows-2019
-            target: windows-cpu
-          - os: windows-2019
-            target: windows-nvidia
-          - os: windows-2019
-            target: windows-directml
 
     runs-on: ${{ matrix.os }}
 
@@ -73,15 +63,6 @@ jobs:
         run: |
           echo "release_url=${{ env.REPO_URL }}/releases/download/${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           echo "package_name=voicevox_engine-${{ matrix.target }}-${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
-
-      - name: <Setup> Check out the repository
-        uses: actions/checkout@v4
-
-      - name: <Setup> Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11.3"
-          cache: pip
 
       - name: <Setup> Download ENGINE package
         run: |
