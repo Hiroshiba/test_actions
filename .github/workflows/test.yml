@@ -1,62 +1,24 @@
 name: check test
 
-# on:
-#   push:
+on:
+  push:
+
 defaults:
   run:
     shell: bash
 
-# jobs:
-#   # 全OSで実行lsしてwcで行数を数えるコードを叩いてみる
-#   check:
-#     runs-on: ${{ matrix.os }}
-#     strategy:
-#       matrix:
-#         os: [ubuntu-latest, windows-latest, macos-latest]
-#     steps:
-#       - name: Run ls
-#         run: ls
-#       - name: Run wc
-#         run: ls | wc -l
-#       - name: Setup tmate session
-#         uses: mxschmitt/action-tmate@v3
-
-on:
-  push:
-  workflow_call:
-    inputs:
-      version:
-        type: string
-        required: true
-      repo_url:
-        type: string
-        required: false
-  workflow_dispatch:
-    inputs:
-      version:
-        type: string
-        description: "テストしたいタグ名"
-        required: true
-      repo_url:
-        type: string
-        description: "リポジトリのURL（省略可能）"
-        required: false
-
-env:
-  REPO_URL: "https://github.com/VOICEVOX/voicevox_engine"
-  VERSION: "0.19.0"
-  # VERSION: "0.18.1"
-
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-12
-
+  # 全OSで実行lsしてwcで行数を数えるコードを叩いてみる
+  check:
     runs-on: ${{ matrix.os }}
-
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: Set alias and use curl
+        run: |
+          alias curl='curl --retry 3 --retry-delay 5 --retry-all-errors'
+          curl https://example.com
