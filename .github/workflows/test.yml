@@ -14,13 +14,14 @@ jobs:
     strategy:
       matrix:
         os: [
-            windows-latest,
             windows-2019
-            macos-latest,
+            windows-latest,
             macos-12,
+            macos-14,
+            macos-latest,
+            ubuntu-20.04,
             ubuntu-22.04,
             ubuntu-latest,
-            macos-14,
           ]
     steps:
       # - name: Setup tmate session
@@ -28,4 +29,4 @@ jobs:
 
       - name: Set alias and use curl
         run: |
-          curl --retry 3 --retry-delay 5 --retry-all-errors https://example.com
+          curl --retry 3 --retry-delay 5 https://example.com
