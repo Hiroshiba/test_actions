@@ -1,5 +1,5 @@
 more_itertools
-numpy<1.22
+numpy==1.20.3
 torch<2.0.0
 tqdm
 parameterized
@@ -10,7 +10,7 @@ git+https://github.com/Hiroshiba/acoustic_feature_extractor@478f730c1cd5b24015c7
 librosa==0.8.0
 mosqito==0.2.1
 numba<0.55
-pysptk<0.2
+pysptk<1.1
 pytest
 pyworld==0.3.0
 scipy<1.8.0
