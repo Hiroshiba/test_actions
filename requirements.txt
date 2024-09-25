@@ -1,0 +1,17 @@
+more_itertools
+numpy<1.22
+torch<2.0.0
+tqdm
+parameterized
+pyyaml
+retry
+librosa==0.8.0
+mosqito==0.2.1
+numba
+numpy
+parameterized
+pysptk
+pytest
+pyworld
+scipy
+tqdm

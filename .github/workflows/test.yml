@@ -8,26 +8,29 @@ defaults:
     shell: bash
 
 jobs:
-  # 全OSで実行lsしてwcで行数を数えるコードを叩いてみる
   check:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          [
-            windows-2019,
-            windows-latest,
-            macos-12,
-            macos-14,
-            macos-latest,
+        os: [
+            # windows-2019,
+            # windows-latest,
+            # macos-12,
+            # macos-14,
+            # macos-latest,
             ubuntu-20.04,
-            ubuntu-22.04,
-            ubuntu-latest,
+            # ubuntu-22.04,
+            # ubuntu-latest,
           ]
     steps:
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set alias and use curl
-        run: |
-          curl --retry 3 --retry-delay 5 https://example.com
+      # python 3.7をインストール
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.7
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
