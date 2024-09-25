@@ -5,15 +5,12 @@ tqdm
 parameterized
 pyyaml
 retry
+git+https://github.com/Hiroshiba/acoustic_feature_extractor@478f730c1cd5b24015c73872c2186d123be1b3bc
 
-# 互換性のため
 librosa==0.8.0
 mosqito==0.2.1
 numba<0.55
-numpy
-parameterized
-pysptk==0.1.18
+pysptk<0.2
 pytest
 pyworld==0.3.0
 scipy<1.8.0
-tqdm
