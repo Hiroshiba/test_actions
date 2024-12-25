@@ -12,19 +12,27 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [
-            # windows-2019,
+        os:
+          [
+            windows-2019,
+            windows-2022,
             windows-latest,
             macos-13,
-            # macos-14,
+            macos-14,
+            macos-15,
             macos-latest,
-            # ubuntu-20.04,
-            # ubuntu-22.04,
+            ubuntu-20.04,
+            ubuntu-22.04,
+            ubuntu-24.04,
             ubuntu-latest,
           ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+
+      - run: |
+          echo "OS: ${{ matrix.os }}"
+          echo "\$OS: $OS"
