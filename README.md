@@ -17,5 +17,3 @@ DOCKERFILE_HADOLINT どうしよう。こっちは入れても良さそう？
 workflow_call のメモ
 https://zenn.dev/jerome/articles/cc07ad73e017ad
 https://blog.lufia.org/entry/2023/03/21/222847
-
-a
