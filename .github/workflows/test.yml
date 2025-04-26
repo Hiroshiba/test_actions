@@ -21,7 +21,6 @@ jobs:
             macos-14,
             macos-15,
             macos-latest,
-            ubuntu-20.04,
             ubuntu-22.04,
             ubuntu-24.04,
             ubuntu-latest,
@@ -37,4 +36,4 @@ jobs:
           echo "OS: ${{ matrix.os }}"
           echo "\$OS: $OS"
           echo "runner.os: ${{ runner.os }}"
-          echo "ImageOS": "${{ env.ImageOS }}"
+          echo "ImageOS: $ImageOS"
