@@ -29,10 +29,6 @@ jobs:
             architecture: x64
             onnxruntime_device: cpu
             zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
-          # Windows arm64
-          - os: windows-11-arm
-            architecture: arm64
-            onnxruntime_device: cpu
           # macOS x64 (Intel, 最新)
           - os: macos-15-intel
             architecture: x64
@@ -248,10 +244,6 @@ jobs:
             architecture: x64
             onnxruntime_device: cpu
             zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
-          # Windows arm64
-          - os: windows-11-arm
-            architecture: arm64
-            onnxruntime_device: cpu
           # macOS x64 (Intel, 最新)
           - os: macos-15-intel
             architecture: x64
@@ -287,6 +279,11 @@ jobs:
         if: matrix.zlib_url != ''
         run: echo "${{ matrix.zlib_url }}" >> download/zlib_url.txt
 
+      - name: Start timing for zlib (with cache)
+        if: matrix.zlib_url != ''
+        run: |
+          echo "START_TIME=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Restore cached zlib
         if: matrix.zlib_url != ''
         uses: actions/cache/restore@v4
@@ -296,12 +293,10 @@ jobs:
           key: zlib-cache-v1-${{ hashFiles('download/zlib_url.txt') }}
           path: download/zlib
 
-      - name: Test zlib download (with cache)
+      - name: Download zlib (if cache miss)
         if: steps.zlib-cache-restore.outputs.cache-hit != 'true' && matrix.zlib_url != ''
         run: |
-          echo "=== Testing zlib download (with cache, cache miss) ==="
-          START_TIME=$(date +%s)
-
+          echo "=== zlib cache miss, downloading... ==="
           # hiho.yaml lines 152-160 と同じ処理
           curl -fL --retry 3 --retry-delay 5 "${{ matrix.zlib_url }}" -o download/zlib.zip
           mkdir -p download/zlib
@@ -310,17 +305,6 @@ jobs:
           mv download/zlib/dll_${{ matrix.architecture }}/zlibwapi.dll download/zlib/zlibwapi.dll
           rm -r download/zlib/dll_${{ matrix.architecture }}
 
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "✓ zlib download time (with cache, miss): ${DURATION} seconds"
-          echo "${DURATION}" > zlib_with_cache_time.txt
-
-      - name: Record zlib cache hit
-        if: steps.zlib-cache-restore.outputs.cache-hit == 'true' && matrix.zlib_url != ''
-        run: |
-          echo "=== zlib cache hit! (no download needed) ==="
-          echo "0" > zlib_with_cache_time.txt
-
       - name: Save zlib cache
         if: matrix.zlib_url != ''
         uses: actions/cache/save@v4
@@ -328,6 +312,15 @@ jobs:
           # hiho.yaml lines 162-167 と同じ
           key: ${{ steps.zlib-cache-restore.outputs.cache-primary-key }}
           path: download/zlib
+
+      - name: End timing for zlib (with cache)
+        if: matrix.zlib_url != ''
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          CACHE_STATUS="${{ steps.zlib-cache-restore.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+          echo "✓ zlib total time (with cache, $CACHE_STATUS): ${DURATION} seconds"
+          echo "${DURATION}" > zlib_with_cache_time.txt
 
       - name: Upload zlib timing (with cache)
         if: matrix.zlib_url != ''
@@ -366,6 +359,10 @@ jobs:
           echo "DOWNLOADER_PATH=$downloader_path" >> "$GITHUB_ENV"
 
       # === VOICEVOX CORE ===
+      - name: Start timing for CORE (with cache)
+        run: |
+          echo "CORE_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Restore cached CORE
         uses: actions/cache/restore@v4
         id: voicevox-core-cache-restore
@@ -374,31 +371,18 @@ jobs:
           key: voicevox-core-${{ runner.os }}-${{ matrix.architecture }}-${{ matrix.onnxruntime_device }}-v${{ env.VOICEVOX_CORE_AND_DOWNLOADER_VERSION }}
           path: download/core/c_api
 
-      - name: Test VOICEVOX CORE download (with cache)
+      - name: Download CORE (if cache miss)
         if: steps.voicevox-core-cache-restore.outputs.cache-hit != 'true'
         run: |
-          echo "=== Testing VOICEVOX CORE download (with cache, cache miss) ==="
-          START_TIME=$(date +%s)
-
+          echo "=== VOICEVOX CORE cache miss, downloading... ==="
           # hiho.yaml lines 268-275 と同じ処理
           ${{ env.DOWNLOADER_PATH }} \
             --only c-api \
             --c-api-version "$VOICEVOX_CORE_AND_DOWNLOADER_VERSION" \
             --cpu-arch ${{ matrix.architecture }} \
             -o download/core
-
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "✓ VOICEVOX CORE download time (with cache, miss): ${DURATION} seconds"
-          echo "${DURATION}" > core_with_cache_time.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Record CORE cache hit
-        if: steps.voicevox-core-cache-restore.outputs.cache-hit == 'true'
-        run: |
-          echo "=== VOICEVOX CORE cache hit! (no download needed) ==="
-          echo "0" > core_with_cache_time.txt
 
       - name: Save CORE cache
         uses: actions/cache/save@v4
@@ -407,6 +391,14 @@ jobs:
           key: ${{ steps.voicevox-core-cache-restore.outputs.cache-primary-key }}
           path: download/core/c_api
 
+      - name: End timing for CORE (with cache)
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - CORE_START_TIME))
+          CACHE_STATUS="${{ steps.voicevox-core-cache-restore.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+          echo "✓ VOICEVOX CORE total time (with cache, $CACHE_STATUS): ${DURATION} seconds"
+          echo "${DURATION}" > core_with_cache_time.txt
+
       - name: Upload CORE timing (with cache)
         uses: actions/upload-artifact@v4
         with:
@@ -414,6 +406,10 @@ jobs:
           path: core_with_cache_time.txt
 
       # === ONNX Runtime ===
+      - name: Start timing for ONNX Runtime (with cache)
+        run: |
+          echo "ONNXRUNTIME_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Restore cached ONNX Runtime
         uses: actions/cache/restore@v4
         id: onnxruntime-cache-restore
@@ -422,12 +418,10 @@ jobs:
           key: onnxruntime-${{ runner.os }}-${{ matrix.architecture }}-${{ matrix.onnxruntime_device }}-core${{ env.VOICEVOX_CORE_AND_DOWNLOADER_VERSION }}
           path: download/core/onnxruntime
 
-      - name: Test ONNX Runtime download (with cache)
+      - name: Download ONNX Runtime (if cache miss)
         if: steps.onnxruntime-cache-restore.outputs.cache-hit != 'true'
         run: |
-          echo "=== Testing ONNX Runtime download (with cache, cache miss) ==="
-          START_TIME=$(date +%s)
-
+          echo "=== ONNX Runtime cache miss, downloading... ==="
           # hiho.yaml lines 286-295 と同じ処理
           ${{ env.DOWNLOADER_PATH }} \
             --only onnxruntime \
@@ -436,11 +430,6 @@ jobs:
             --cpu-arch ${{ matrix.architecture }} \
             -o download/core \
             <<< y
-
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "✓ ONNX Runtime download time (with cache, miss): ${DURATION} seconds"
-          echo "${DURATION}" > onnxruntime_with_cache_time.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -460,18 +449,20 @@ jobs:
                 $lib_dir/libvoicevox_onnxruntime.so ;;
           esac
 
-      - name: Record ONNX Runtime cache hit
-        if: steps.onnxruntime-cache-restore.outputs.cache-hit == 'true'
-        run: |
-          echo "=== ONNX Runtime cache hit! (no download needed) ==="
-          echo "0" > onnxruntime_with_cache_time.txt
-
       - name: Save ONNX Runtime cache
         uses: actions/cache/save@v4
         with:
           # hiho.yaml lines 312-316 と同じ
           key: ${{ steps.onnxruntime-cache-restore.outputs.cache-primary-key }}
           path: download/core/onnxruntime
+
+      - name: End timing for ONNX Runtime (with cache)
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - ONNXRUNTIME_START_TIME))
+          CACHE_STATUS="${{ steps.onnxruntime-cache-restore.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+          echo "✓ ONNX Runtime total time (with cache, $CACHE_STATUS): ${DURATION} seconds"
+          echo "${DURATION}" > onnxruntime_with_cache_time.txt
 
       - name: Upload ONNX Runtime timing (with cache)
         uses: actions/upload-artifact@v4
@@ -480,6 +471,10 @@ jobs:
           path: onnxruntime_with_cache_time.txt
 
       # === models (VVM) ===
+      - name: Start timing for models (with cache)
+        run: |
+          echo "MODELS_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Restore cached models
         uses: actions/cache/restore@v4
         id: models-cache-restore
@@ -489,31 +484,18 @@ jobs:
           path: download/core/models
           enableCrossOsArchive: true
 
-      - name: Test models download (with cache)
+      - name: Download models (if cache miss)
         if: steps.models-cache-restore.outputs.cache-hit != 'true'
         run: |
-          echo "=== Testing models download (with cache, cache miss) ==="
-          START_TIME=$(date +%s)
-
+          echo "=== models cache miss, downloading... ==="
           # hiho.yaml lines 342-349 と同じ処理
           ${{ env.DOWNLOADER_PATH }} \
             --only models \
             --models-version "$VOICEVOX_VVM_VERSION" \
             -o download/core \
             <<< y
-
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "✓ models download time (with cache, miss): ${DURATION} seconds"
-          echo "${DURATION}" > models_with_cache_time.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Record models cache hit
-        if: steps.models-cache-restore.outputs.cache-hit == 'true'
-        run: |
-          echo "=== models cache hit! (no download needed) ==="
-          echo "0" > models_with_cache_time.txt
 
       - name: Save models cache
         uses: actions/cache/save@v4
@@ -523,6 +505,14 @@ jobs:
           path: download/core/models
           enableCrossOsArchive: true
 
+      - name: End timing for models (with cache)
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - MODELS_START_TIME))
+          CACHE_STATUS="${{ steps.models-cache-restore.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+          echo "✓ models total time (with cache, $CACHE_STATUS): ${DURATION} seconds"
+          echo "${DURATION}" > models_with_cache_time.txt
+
       - name: Upload models timing (with cache)
         uses: actions/upload-artifact@v4
         with:
@@ -530,35 +520,41 @@ jobs:
           path: models_with_cache_time.txt
 
       # === VOICEVOX RESOURCE ===
-      - name: Prepare RESOURCE cache
-        uses: actions/cache@v4
-        id: voicevox-resource-cache
+      - name: Start timing for RESOURCE (with cache)
+        run: |
+          echo "RESOURCE_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Restore cached RESOURCE
+        uses: actions/cache/restore@v4
+        id: voicevox-resource-cache-restore
         with:
           # hiho.yaml lines 360-365 と同じ
           key: voicevox-resource-${{ env.VOICEVOX_RESOURCE_VERSION }}
           path: download/resource
           enableCrossOsArchive: true
 
-      - name: Test VOICEVOX RESOURCE checkout (with cache)
-        if: steps.voicevox-resource-cache.outputs.cache-hit != 'true'
+      - name: Checkout RESOURCE (if cache miss)
+        if: steps.voicevox-resource-cache-restore.outputs.cache-hit != 'true'
         run: |
-          echo "=== Testing VOICEVOX RESOURCE checkout (with cache, cache miss) ==="
-          START_TIME=$(date +%s)
-
+          echo "=== VOICEVOX RESOURCE cache miss, cloning... ==="
           # hiho.yaml lines 367-373 と同じ処理（checkout action を使わずに git clone で実装）
           git clone --depth 1 --branch "$VOICEVOX_RESOURCE_VERSION" \
             https://github.com/VOICEVOX/voicevox_resource.git download/resource
 
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "✓ VOICEVOX RESOURCE checkout time (with cache, miss): ${DURATION} seconds"
-          echo "${DURATION}" > resource_with_cache_time.txt
+      - name: Save RESOURCE cache
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.voicevox-resource-cache-restore.outputs.cache-primary-key }}
+          path: download/resource
+          enableCrossOsArchive: true
 
-      - name: Record RESOURCE cache hit
-        if: steps.voicevox-resource-cache.outputs.cache-hit == 'true'
+      - name: End timing for RESOURCE (with cache)
         run: |
-          echo "=== VOICEVOX RESOURCE cache hit! (no download needed) ==="
-          echo "0" > resource_with_cache_time.txt
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - RESOURCE_START_TIME))
+          CACHE_STATUS="${{ steps.voicevox-resource-cache-restore.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+          echo "✓ VOICEVOX RESOURCE total time (with cache, $CACHE_STATUS): ${DURATION} seconds"
+          echo "${DURATION}" > resource_with_cache_time.txt
 
       - name: Upload RESOURCE timing (with cache)
         uses: actions/upload-artifact@v4
