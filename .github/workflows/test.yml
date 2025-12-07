@@ -1,44 +1,624 @@
-name: check test
+name: Cache Performance Test
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - main
+
+env:
+  VOICEVOX_RESOURCE_VERSION: "0.25.0"
+  VOICEVOX_CORE_AND_DOWNLOADER_VERSION: "0.16.2"
+  VOICEVOX_ONNXRUNTIME_VERSION: "voicevox_onnxruntime-1.17.3"
+  VOICEVOX_VVM_VERSION: "0.16.1"
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  check:
-    runs-on: ${{ matrix.os }}
+  # キャッシュなしでダウンロード
+  test-no-cache:
+    name: No Cache - ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          [
-            windows-2019,
-            windows-2022,
-            windows-2025,
-            windows-latest,
-            windows-11-arm,
-            macos-13,
-            macos-14,
-            macos-15,
-            macos-latest,
-            ubuntu-20.04,
-            ubuntu-22.04,
-            ubuntu-24.04,
-            ubuntu-latest,
-            ubuntu-22.04-arm,
-            ubuntu-24.04-arm,
-          ]
+        include:
+          # Windows x64 (最新)
+          - os: windows-2025
+            architecture: x64
+            onnxruntime_device: cpu
+            zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
+          # Windows arm64
+          - os: windows-11-arm
+            architecture: arm64
+            onnxruntime_device: cpu
+          # macOS x64 (Intel, 最新)
+          - os: macos-15-intel
+            architecture: x64
+            onnxruntime_device: cpu
+          # macOS arm64 (最新)
+          - os: macos-15
+            architecture: arm64
+            onnxruntime_device: cpu
+          # Ubuntu x64 (最新)
+          - os: ubuntu-24.04
+            architecture: x64
+            onnxruntime_device: cpu
+          # Ubuntu arm64 (最新)
+          - os: ubuntu-24.04-arm
+            architecture: arm64
+            onnxruntime_device: cpu
+    runs-on: ${{ matrix.os }}
+    env:
+      sed: ${{ startsWith(matrix.os, 'macos-') && 'gsed' || 'sed' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gnu-sed coreutils
 
-      - run: |
-          echo "OS: ${{ matrix.os }}"
-          echo "\$OS: $OS"
-          echo "runner.os: ${{ runner.os }}"
-          echo "ImageOS: $ImageOS"
+      - name: Create download directory
+        run: mkdir -p download/core
+
+      # === zlib (Windows only) ===
+      - name: Test zlib download (no cache)
+        if: matrix.zlib_url != ''
+        run: |
+          echo "=== Testing zlib download (no cache) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 152-160 と同じ処理
+          curl -fL --retry 3 --retry-delay 5 "${{ matrix.zlib_url }}" -o download/zlib.zip
+          mkdir -p download/zlib
+          unzip download/zlib.zip dll_${{ matrix.architecture }}/zlibwapi.dll -d download/zlib
+          rm download/zlib.zip
+          mv download/zlib/dll_${{ matrix.architecture }}/zlibwapi.dll download/zlib/zlibwapi.dll
+          rm -r download/zlib/dll_${{ matrix.architecture }}
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ zlib download time (no cache): ${DURATION} seconds"
+          echo "${DURATION}" > zlib_no_cache_time.txt
+
+      - name: Upload zlib timing (no cache)
+        if: matrix.zlib_url != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-no-cache-zlib-${{ matrix.os }}
+          path: zlib_no_cache_time.txt
+
+      # === Downloader ===
+      - name: Download Downloader
+        run: |
+          # hiho.yaml lines 240-264 と同じ処理
+          case "$RUNNER_OS,$RUNNER_ARCH" in
+            Windows,X64) downloader_name=download-windows-x64.exe ;;
+            macOS,X64) downloader_name=download-osx-x64 ;;
+            macOS,ARM64) downloader_name=download-osx-arm64 ;;
+            Linux,X64) downloader_name=download-linux-x64 ;;
+            Linux,ARM64) downloader_name=download-linux-arm64 ;;
+            *)
+              echo 'unexpected runner' >&2
+              exit 1
+          esac
+
+          curl -fLO --retry 3 --retry-delay 5 \
+            --output-dir "$RUNNER_TEMP" \
+            https://github.com/VOICEVOX/voicevox_core/releases/download/"$VOICEVOX_CORE_AND_DOWNLOADER_VERSION"/$downloader_name
+
+          downloader_path=$RUNNER_TEMP/$downloader_name
+
+          if [ "$RUNNER_OS" = 'Windows' ]; then
+            downloader_path=$(cygpath "$downloader_path")
+          else
+            chmod +x "$downloader_path"
+          fi
+
+          echo "DOWNLOADER_PATH=$downloader_path" >> "$GITHUB_ENV"
+
+      # === VOICEVOX CORE ===
+      - name: Test VOICEVOX CORE download (no cache)
+        run: |
+          echo "=== Testing VOICEVOX CORE download (no cache) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 268-275 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only c-api \
+            --c-api-version "$VOICEVOX_CORE_AND_DOWNLOADER_VERSION" \
+            --cpu-arch ${{ matrix.architecture }} \
+            -o download/core
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ VOICEVOX CORE download time (no cache): ${DURATION} seconds"
+          echo "${DURATION}" > core_no_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload CORE timing (no cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-no-cache-core-${{ matrix.os }}
+          path: core_no_cache_time.txt
+
+      # === ONNX Runtime ===
+      - name: Test ONNX Runtime download (no cache)
+        run: |
+          echo "=== Testing ONNX Runtime download (no cache) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 286-295 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only onnxruntime \
+            --onnxruntime-version "$VOICEVOX_ONNXRUNTIME_VERSION" \
+            --devices ${{ matrix.onnxruntime_device }} \
+            --cpu-arch ${{ matrix.architecture }} \
+            -o download/core \
+            <<< y
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ ONNX Runtime download time (no cache): ${DURATION} seconds"
+          echo "${DURATION}" > onnxruntime_no_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename ONNX Runtime (macOS/Linux)
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          # hiho.yaml lines 298-310 と同じ処理
+          lib_dir=download/core/onnxruntime/lib
+          case "$RUNNER_OS" in
+            macOS)
+              mv -v \
+                "$(find $lib_dir -name 'libvoicevox_onnxruntime.[1-9]*.dylib')" \
+                $lib_dir/libvoicevox_onnxruntime.dylib ;;
+            Linux)
+              mv -v \
+                "$(find $lib_dir -name 'libvoicevox_onnxruntime.so.[1-9]*')" \
+                $lib_dir/libvoicevox_onnxruntime.so ;;
+          esac
+
+      - name: Upload ONNX Runtime timing (no cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-no-cache-onnxruntime-${{ matrix.os }}
+          path: onnxruntime_no_cache_time.txt
+
+      # === models (VVM) ===
+      - name: Test models download (no cache)
+        run: |
+          echo "=== Testing models download (no cache) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 342-349 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only models \
+            --models-version "$VOICEVOX_VVM_VERSION" \
+            -o download/core \
+            <<< y
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ models download time (no cache): ${DURATION} seconds"
+          echo "${DURATION}" > models_no_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload models timing (no cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-no-cache-models-${{ matrix.os }}
+          path: models_no_cache_time.txt
+
+      # === VOICEVOX RESOURCE ===
+      - name: Test VOICEVOX RESOURCE checkout (no cache)
+        run: |
+          echo "=== Testing VOICEVOX RESOURCE checkout (no cache) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 367-373 と同じ処理（checkout action を使わずに git clone で実装）
+          git clone --depth 1 --branch "$VOICEVOX_RESOURCE_VERSION" \
+            https://github.com/VOICEVOX/voicevox_resource.git download/resource
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ VOICEVOX RESOURCE checkout time (no cache): ${DURATION} seconds"
+          echo "${DURATION}" > resource_no_cache_time.txt
+
+      - name: Upload RESOURCE timing (no cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-no-cache-resource-${{ matrix.os }}
+          path: resource_no_cache_time.txt
+
+  # キャッシュありでダウンロード
+  test-with-cache:
+    name: With Cache - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows x64 (最新)
+          - os: windows-2025
+            architecture: x64
+            onnxruntime_device: cpu
+            zlib_url: http://www.winimage.com/zLibDll/zlib123dllx64.zip
+          # Windows arm64
+          - os: windows-11-arm
+            architecture: arm64
+            onnxruntime_device: cpu
+          # macOS x64 (Intel, 最新)
+          - os: macos-15-intel
+            architecture: x64
+            onnxruntime_device: cpu
+          # macOS arm64 (最新)
+          - os: macos-15
+            architecture: arm64
+            onnxruntime_device: cpu
+          # Ubuntu x64 (最新)
+          - os: ubuntu-24.04
+            architecture: x64
+            onnxruntime_device: cpu
+          # Ubuntu arm64 (最新)
+          - os: ubuntu-24.04-arm
+            architecture: arm64
+            onnxruntime_device: cpu
+    runs-on: ${{ matrix.os }}
+    env:
+      sed: ${{ startsWith(matrix.os, 'macos-') && 'gsed' || 'sed' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gnu-sed coreutils
+
+      - name: Create download directory
+        run: mkdir -p download/core
+
+      # === zlib (Windows only) ===
+      - name: Export zlib url to calc hash
+        if: matrix.zlib_url != ''
+        run: echo "${{ matrix.zlib_url }}" >> download/zlib_url.txt
+
+      - name: Restore cached zlib
+        if: matrix.zlib_url != ''
+        uses: actions/cache/restore@v4
+        id: zlib-cache-restore
+        with:
+          # hiho.yaml lines 144-148 と同じ
+          key: zlib-cache-v1-${{ hashFiles('download/zlib_url.txt') }}
+          path: download/zlib
+
+      - name: Test zlib download (with cache)
+        if: steps.zlib-cache-restore.outputs.cache-hit != 'true' && matrix.zlib_url != ''
+        run: |
+          echo "=== Testing zlib download (with cache, cache miss) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 152-160 と同じ処理
+          curl -fL --retry 3 --retry-delay 5 "${{ matrix.zlib_url }}" -o download/zlib.zip
+          mkdir -p download/zlib
+          unzip download/zlib.zip dll_${{ matrix.architecture }}/zlibwapi.dll -d download/zlib
+          rm download/zlib.zip
+          mv download/zlib/dll_${{ matrix.architecture }}/zlibwapi.dll download/zlib/zlibwapi.dll
+          rm -r download/zlib/dll_${{ matrix.architecture }}
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ zlib download time (with cache, miss): ${DURATION} seconds"
+          echo "${DURATION}" > zlib_with_cache_time.txt
+
+      - name: Record zlib cache hit
+        if: steps.zlib-cache-restore.outputs.cache-hit == 'true' && matrix.zlib_url != ''
+        run: |
+          echo "=== zlib cache hit! (no download needed) ==="
+          echo "0" > zlib_with_cache_time.txt
+
+      - name: Save zlib cache
+        if: matrix.zlib_url != ''
+        uses: actions/cache/save@v4
+        with:
+          # hiho.yaml lines 162-167 と同じ
+          key: ${{ steps.zlib-cache-restore.outputs.cache-primary-key }}
+          path: download/zlib
+
+      - name: Upload zlib timing (with cache)
+        if: matrix.zlib_url != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-with-cache-zlib-${{ matrix.os }}
+          path: zlib_with_cache_time.txt
+
+      # === Downloader ===
+      - name: Download Downloader
+        run: |
+          # hiho.yaml lines 240-264 と同じ処理
+          case "$RUNNER_OS,$RUNNER_ARCH" in
+            Windows,X64) downloader_name=download-windows-x64.exe ;;
+            macOS,X64) downloader_name=download-osx-x64 ;;
+            macOS,ARM64) downloader_name=download-osx-arm64 ;;
+            Linux,X64) downloader_name=download-linux-x64 ;;
+            Linux,ARM64) downloader_name=download-linux-arm64 ;;
+            *)
+              echo 'unexpected runner' >&2
+              exit 1
+          esac
+
+          curl -fLO --retry 3 --retry-delay 5 \
+            --output-dir "$RUNNER_TEMP" \
+            https://github.com/VOICEVOX/voicevox_core/releases/download/"$VOICEVOX_CORE_AND_DOWNLOADER_VERSION"/$downloader_name
+
+          downloader_path=$RUNNER_TEMP/$downloader_name
+
+          if [ "$RUNNER_OS" = 'Windows' ]; then
+            downloader_path=$(cygpath "$downloader_path")
+          else
+            chmod +x "$downloader_path"
+          fi
+
+          echo "DOWNLOADER_PATH=$downloader_path" >> "$GITHUB_ENV"
+
+      # === VOICEVOX CORE ===
+      - name: Restore cached CORE
+        uses: actions/cache/restore@v4
+        id: voicevox-core-cache-restore
+        with:
+          # hiho.yaml lines 201-206 と同じ
+          key: voicevox-core-${{ runner.os }}-${{ matrix.architecture }}-${{ matrix.onnxruntime_device }}-v${{ env.VOICEVOX_CORE_AND_DOWNLOADER_VERSION }}
+          path: download/core/c_api
+
+      - name: Test VOICEVOX CORE download (with cache)
+        if: steps.voicevox-core-cache-restore.outputs.cache-hit != 'true'
+        run: |
+          echo "=== Testing VOICEVOX CORE download (with cache, cache miss) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 268-275 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only c-api \
+            --c-api-version "$VOICEVOX_CORE_AND_DOWNLOADER_VERSION" \
+            --cpu-arch ${{ matrix.architecture }} \
+            -o download/core
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ VOICEVOX CORE download time (with cache, miss): ${DURATION} seconds"
+          echo "${DURATION}" > core_with_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record CORE cache hit
+        if: steps.voicevox-core-cache-restore.outputs.cache-hit == 'true'
+        run: |
+          echo "=== VOICEVOX CORE cache hit! (no download needed) ==="
+          echo "0" > core_with_cache_time.txt
+
+      - name: Save CORE cache
+        uses: actions/cache/save@v4
+        with:
+          # hiho.yaml lines 277-281 と同じ
+          key: ${{ steps.voicevox-core-cache-restore.outputs.cache-primary-key }}
+          path: download/core/c_api
+
+      - name: Upload CORE timing (with cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-with-cache-core-${{ matrix.os }}
+          path: core_with_cache_time.txt
+
+      # === ONNX Runtime ===
+      - name: Restore cached ONNX Runtime
+        uses: actions/cache/restore@v4
+        id: onnxruntime-cache-restore
+        with:
+          # hiho.yaml lines 209-214 と同じ
+          key: onnxruntime-${{ runner.os }}-${{ matrix.architecture }}-${{ matrix.onnxruntime_device }}-core${{ env.VOICEVOX_CORE_AND_DOWNLOADER_VERSION }}
+          path: download/core/onnxruntime
+
+      - name: Test ONNX Runtime download (with cache)
+        if: steps.onnxruntime-cache-restore.outputs.cache-hit != 'true'
+        run: |
+          echo "=== Testing ONNX Runtime download (with cache, cache miss) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 286-295 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only onnxruntime \
+            --onnxruntime-version "$VOICEVOX_ONNXRUNTIME_VERSION" \
+            --devices ${{ matrix.onnxruntime_device }} \
+            --cpu-arch ${{ matrix.architecture }} \
+            -o download/core \
+            <<< y
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ ONNX Runtime download time (with cache, miss): ${DURATION} seconds"
+          echo "${DURATION}" > onnxruntime_with_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename ONNX Runtime (macOS/Linux)
+        if: steps.onnxruntime-cache-restore.outputs.cache-hit != 'true' && (runner.os == 'macOS' || runner.os == 'Linux')
+        run: |
+          # hiho.yaml lines 298-310 と同じ処理
+          lib_dir=download/core/onnxruntime/lib
+          case "$RUNNER_OS" in
+            macOS)
+              mv -v \
+                "$(find $lib_dir -name 'libvoicevox_onnxruntime.[1-9]*.dylib')" \
+                $lib_dir/libvoicevox_onnxruntime.dylib ;;
+            Linux)
+              mv -v \
+                "$(find $lib_dir -name 'libvoicevox_onnxruntime.so.[1-9]*')" \
+                $lib_dir/libvoicevox_onnxruntime.so ;;
+          esac
+
+      - name: Record ONNX Runtime cache hit
+        if: steps.onnxruntime-cache-restore.outputs.cache-hit == 'true'
+        run: |
+          echo "=== ONNX Runtime cache hit! (no download needed) ==="
+          echo "0" > onnxruntime_with_cache_time.txt
+
+      - name: Save ONNX Runtime cache
+        uses: actions/cache/save@v4
+        with:
+          # hiho.yaml lines 312-316 と同じ
+          key: ${{ steps.onnxruntime-cache-restore.outputs.cache-primary-key }}
+          path: download/core/onnxruntime
+
+      - name: Upload ONNX Runtime timing (with cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-with-cache-onnxruntime-${{ matrix.os }}
+          path: onnxruntime_with_cache_time.txt
+
+      # === models (VVM) ===
+      - name: Restore cached models
+        uses: actions/cache/restore@v4
+        id: models-cache-restore
+        with:
+          # hiho.yaml lines 226-231 と同じ
+          key: models-${{ env.VOICEVOX_VVM_VERSION }}
+          path: download/core/models
+          enableCrossOsArchive: true
+
+      - name: Test models download (with cache)
+        if: steps.models-cache-restore.outputs.cache-hit != 'true'
+        run: |
+          echo "=== Testing models download (with cache, cache miss) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 342-349 と同じ処理
+          ${{ env.DOWNLOADER_PATH }} \
+            --only models \
+            --models-version "$VOICEVOX_VVM_VERSION" \
+            -o download/core \
+            <<< y
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ models download time (with cache, miss): ${DURATION} seconds"
+          echo "${DURATION}" > models_with_cache_time.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record models cache hit
+        if: steps.models-cache-restore.outputs.cache-hit == 'true'
+        run: |
+          echo "=== models cache hit! (no download needed) ==="
+          echo "0" > models_with_cache_time.txt
+
+      - name: Save models cache
+        uses: actions/cache/save@v4
+        with:
+          # hiho.yaml lines 351-356 と同じ
+          key: ${{ steps.models-cache-restore.outputs.cache-primary-key }}
+          path: download/core/models
+          enableCrossOsArchive: true
+
+      - name: Upload models timing (with cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-with-cache-models-${{ matrix.os }}
+          path: models_with_cache_time.txt
+
+      # === VOICEVOX RESOURCE ===
+      - name: Prepare RESOURCE cache
+        uses: actions/cache@v4
+        id: voicevox-resource-cache
+        with:
+          # hiho.yaml lines 360-365 と同じ
+          key: voicevox-resource-${{ env.VOICEVOX_RESOURCE_VERSION }}
+          path: download/resource
+          enableCrossOsArchive: true
+
+      - name: Test VOICEVOX RESOURCE checkout (with cache)
+        if: steps.voicevox-resource-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "=== Testing VOICEVOX RESOURCE checkout (with cache, cache miss) ==="
+          START_TIME=$(date +%s)
+
+          # hiho.yaml lines 367-373 と同じ処理（checkout action を使わずに git clone で実装）
+          git clone --depth 1 --branch "$VOICEVOX_RESOURCE_VERSION" \
+            https://github.com/VOICEVOX/voicevox_resource.git download/resource
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "✓ VOICEVOX RESOURCE checkout time (with cache, miss): ${DURATION} seconds"
+          echo "${DURATION}" > resource_with_cache_time.txt
+
+      - name: Record RESOURCE cache hit
+        if: steps.voicevox-resource-cache.outputs.cache-hit == 'true'
+        run: |
+          echo "=== VOICEVOX RESOURCE cache hit! (no download needed) ==="
+          echo "0" > resource_with_cache_time.txt
+
+      - name: Upload RESOURCE timing (with cache)
+        uses: actions/upload-artifact@v4
+        with:
+          name: timing-with-cache-resource-${{ matrix.os }}
+          path: resource_with_cache_time.txt
+
+  # 結果をまとめる
+  summary:
+    name: Summary
+    needs: [test-no-cache, test-with-cache]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all timing results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: timing-*
+          merge-multiple: false
+
+      - name: Generate summary report
+        run: |
+          echo "# Cache Performance Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Comparison Table" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| OS | Resource | No Cache (sec) | With Cache (sec) | Improvement |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          for os in windows-2025 windows-11-arm macos-15-intel macos-15 ubuntu-24.04 ubuntu-24.04-arm; do
+            for resource in zlib core onnxruntime models resource; do
+              NO_CACHE_FILE="timing-no-cache-${resource}-${os}/${resource}_no_cache_time.txt"
+              WITH_CACHE_FILE="timing-with-cache-${resource}-${os}/${resource}_with_cache_time.txt"
+
+              if [ -f "$NO_CACHE_FILE" ] && [ -f "$WITH_CACHE_FILE" ]; then
+                NO_CACHE_TIME=$(cat "$NO_CACHE_FILE")
+                WITH_CACHE_TIME=$(cat "$WITH_CACHE_FILE")
+
+                if [ "$WITH_CACHE_TIME" = "0" ]; then
+                  IMPROVEMENT="✅ Cache Hit (100%)"
+                elif [ "$NO_CACHE_TIME" -gt 0 ]; then
+                  SAVED=$((NO_CACHE_TIME - WITH_CACHE_TIME))
+                  PERCENT=$((SAVED * 100 / NO_CACHE_TIME))
+                  if [ "$WITH_CACHE_TIME" -eq "$NO_CACHE_TIME" ]; then
+                    IMPROVEMENT="Cache Miss"
+                  else
+                    IMPROVEMENT="${SAVED}s saved (${PERCENT}%)"
+                  fi
+                else
+                  IMPROVEMENT="N/A"
+                fi
+
+                echo "| $os | $resource | $NO_CACHE_TIME | $WITH_CACHE_TIME | $IMPROVEMENT |" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- **No Cache**: Every resource is downloaded each time" >> $GITHUB_STEP_SUMMARY
+          echo "- **With Cache (first run)**: Downloads and saves to cache" >> $GITHUB_STEP_SUMMARY
+          echo "- **With Cache (subsequent runs)**: Restores from cache (0 seconds)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Run this workflow multiple times to see the full benefit of caching!" >> $GITHUB_STEP_SUMMARY
